@@ -1,14 +1,19 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 import requests
 import os
 
 app = Flask(__name__)
+CORS(app)
+
 @app.route('/')
 def index():
-    return open('index.html').read()
-# Environment variables for API key and Assistant ID
-API_KEY = os.environ.get('OPENAI_API_KEY', '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')
-ASSISTANT_ID = os.environ.get('OPENAI_ASSISTANT_ID', 'asst_X6pCppPwljfx0SJwFfpyF1lS')
+    return app.send_static_file('index.html')
+app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+
+# Hardcoded API key and Assistant ID
+API_KEY = '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'
+ASSISTANT_ID = 'asst_X6pCppPwljfx0SJwFfpyF1lS'
 
 def create_openai_thread():
     headers = {
@@ -30,7 +35,7 @@ def get_current_thread_id():
 
 @app.route('/rover_engineer_request', methods=['POST'])
 def handle_rover_engineer_ai_request():
-    question = request.form.get('question', '')
+    question = request.json.get('question', '')
     if not question:
         return jsonify({"response": "Question is empty"})
 

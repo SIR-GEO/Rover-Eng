@@ -89,12 +89,32 @@
         searchBtn.addEventListener('click', () => {
             const message = chatInput.value.trim();
             if (message) {
+                // Create the user's chat bubble
                 const userBubble = document.createElement('div');
                 userBubble.classList.add('chat-bubble');
                 userBubble.textContent = message;
                 chatWindow.appendChild(userBubble);
                 chatInput.value = '';
                 chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                // Send the question to the Flask backend
+                fetch('/rover_engineer_request', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question: message })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Create the AI's chat bubble
+                    const aiBubble = document.createElement('div');
+                    aiBubble.classList.add('chat-bubble');
+                    aiBubble.textContent = data.response;
+                    chatWindow.appendChild(aiBubble);
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                })
+                .catch(error => console.error('Error:', error));
             }
         });
 
