@@ -18,20 +18,43 @@ ASSISTANT_ID = 'asst_X6pCppPwljfx0SJwFfpyF1lS'
 def create_openai_thread():
     headers = {
         'Authorization': f'Bearer {API_KEY}',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v1'
     }
     response = requests.post('https://api.openai.com/v1/threads', headers=headers, json={})
     
     if response.status_code == 200:
-        return response.json().get('id')
+        thread_id = response.json().get('id')
+        if thread_id:
+            return thread_id
+        else:
+            app.logger.error('No thread ID in the response')
+            return None
     else:
-        app.logger.error(f'Failed to create OpenAI thread: {response.text}')
+        app.logger.error(f'Failed to create OpenAI thread: {response.status_code} {response.text}')
         return None
 
 def get_current_thread_id():
     # Ideally, you would use a database or persistent storage to save the thread ID
     # For simplicity, this example creates a new thread every time
     return create_openai_thread()
+
+def send_message_to_thread(thread_id, message):
+    headers = {
+        'Authorization': f'Bearer {API_KEY}',
+        'Content-Type': 'application/json',
+        'OpenAI-Beta': 'assistants=v1'
+    }
+    data = {
+        'role': 'user',  # Assuming 'user' is the role you want to specify
+        'content': message
+    }
+    response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/messages', headers=headers, json=data)
+    
+    # Log the full response for debugging
+    app.logger.info(f'OpenAI API Response: {response.json()}')
+    
+    return response
 
 @app.route('/rover_engineer_request', methods=['POST'])
 def handle_rover_engineer_ai_request():
@@ -43,15 +66,7 @@ def handle_rover_engineer_ai_request():
     if not current_thread_id:
         return jsonify({"response": "Failed to get thread ID"})
 
-    headers = {
-        'Authorization': f'Bearer {API_KEY}',
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v1'
-    }
-    data = {
-        'content': question
-    }
-    response = requests.post(f'https://api.openai.com/v1/threads/{current_thread_id}/messages', headers=headers, json=data)
+    response = send_message_to_thread(current_thread_id, question)
     
     if response.status_code == 200:
         response_data = response.json().get('data', [])
@@ -65,3 +80,4 @@ def handle_rover_engineer_ai_request():
 
 if __name__ == '__main__':
     app.run()
+
