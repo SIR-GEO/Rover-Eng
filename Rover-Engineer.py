@@ -3,7 +3,9 @@ import requests
 import os
 
 app = Flask(__name__)
-
+@app.route('/')
+def index():
+    return open('index.html').read()
 # Environment variables for API key and Assistant ID
 API_KEY = os.environ.get('OPENAI_API_KEY', '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')
 ASSISTANT_ID = os.environ.get('OPENAI_ASSISTANT_ID', 'asst_X6pCppPwljfx0SJwFfpyF1lS')

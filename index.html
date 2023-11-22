@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1920s Rover Engineer AI - Dark Theme</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a202c;
+            color: #fff;
+            font-family: 'Roboto', sans-serif;
+        }
+        #chat-window {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #2d3748;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        .chat-bubble {
+            background-color: #4a5568;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            color: #e2e8f0;
+        }
+        .chat-input {
+            background-color: #2d3748;
+            border: none;
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .search-btn {
+            background-color: #4a5568;
+            color: #fff;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            margin-left: 0.5rem;
+            flex-shrink: 0;
+        }
+        .search-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .search-bar {
+            flex-grow: 1;
+            max-width: 640px; /* Adjust the max-width as needed */
+            display: flex;
+            align-items: center;
+        }
+        .title {
+            position: absolute;
+            top: 2rem; /* Increased padding as per feedback */
+            left: 50%;
+            transform: translateX(-50%);
+        }
+    </style>
+</head>
+<body class="flex flex-col items-center justify-center min-h-screen">
+    <div class="container mx-auto px-4">
+        <h1 class="text-4xl font-bold mb-8 title">1920s Rover Engineer AI</h1>
+        <div id="chat-window">
+            <!-- Chat messages will appear here -->
+        </div>
+    </div>
+    <div class="search-container">
+        <div class="search-bar">
+            <input type="text" placeholder="Questions for me?" class="chat-input">
+            <button class="search-btn">Search</button>
+        </div>
+    </div>
+    <script>
+        const chatWindow = document.getElementById('chat-window');
+        const chatInput = document.querySelector('.chat-input');
+        const searchBtn = document.querySelector('.search-btn');
+
+        searchBtn.addEventListener('click', () => {
+            const message = chatInput.value.trim();
+            if (message) {
+                const userBubble = document.createElement('div');
+                userBubble.classList.add('chat-bubble');
+                userBubble.textContent = message;
+                chatWindow.appendChild(userBubble);
+                chatInput.value = '';
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+            }
+        });
+
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchBtn.click();
+            }
+        });
+
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = chatInput.scrollHeight + 'px';
+        });
+    </script>
+</body>
+</html>
