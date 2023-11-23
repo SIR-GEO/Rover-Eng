@@ -1,14 +1,13 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 import requests
 import os
 
 app = FastAPI()
 
-@app.get('/')
-async def index():
-    return Response(content='index.html', media_type='text/html')
-app.config = {'JSONIFY_PRETTYPRINT_REGULAR': False}
+# Serving static files
+app.mount("/", StaticFiles(directory="static", html=True), name="static")
 
 # Hardcoded API key and Assistant ID
 API_KEY = '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'
@@ -34,8 +33,6 @@ def create_openai_thread():
         return None
 
 def get_current_thread_id():
-    # Ideally, you would use a database or persistent storage to save the thread ID
-    # For simplicity, this example creates a new thread every time
     return create_openai_thread()
 
 def send_message_to_thread(thread_id, message):
@@ -45,14 +42,11 @@ def send_message_to_thread(thread_id, message):
         'OpenAI-Beta': 'assistants=v1'
     }
     data = {
-        'role': 'user',  # Assuming 'user' is the role you want to specify
+        'role': 'user',
         'content': message
     }
     response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/messages', headers=headers, json=data)
-    
-    # Log the full response for debugging
     app.logger.info(f'OpenAI API Response: {response.json()}')
-    
     return response
 
 @app.post('/rover_engineer_request')
@@ -81,4 +75,3 @@ async def handle_rover_engineer_ai_request(request: Request):
 if __name__ == '__main__':
     import uvicorn
     uvicorn.run(app, host='0.0.0.0', port=8000)
-
