@@ -1,73 +1,59 @@
-from fastapi import FastAPI, Request, Response, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
-from fastapi.middleware.cors import CORSMiddleware
-import requests
-import os
-import logging
+from flask import Flask, render_template, request, jsonify
+import openai
+from openai import OpenAI
+import openai
+import time
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+app = Flask(__name__)
 
-app = FastAPI()
+# Initialize the OpenAI client with your API key
+openai.api_key = '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'
+client = openai.Client()
 
-# Add CORS middleware to allow requests from any origin
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Allows all origins
-    allow_credentials=True,
-    allow_methods=["*"],  # Allows all methods
-    allow_headers=["*"],  # Allows all headers
-)
+@app.route('/')
+def index():
+    return render_template('index.html')
 
-# Serving static files
-app.mount("/", StaticFiles(directory="static", html=True), name="static")
+@app.route('/rover_engineer_request', methods=['POST'])
+def rover_engineer_request():
+    data = request.json
+    user_question = data['question']
 
-# Hardcoded API key and Assistant ID
-API_KEY = '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'
-ASSISTANT_ID = 'asst_X6pCppPwljfx0SJwFfpyF1lS'
+    # Create a thread
+    thread = client.beta.threads.create()
 
-def send_message_to_assistant(assistant_id, message):
-    headers = {
-        'Authorization': f'Bearer {API_KEY}',
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v1'  # Include this if you're using beta features
-    }
-    data = {
-           'input': {
-               'messages': [{'role': 'user', 'content': message}]
-           }
-    }
-    logger.info(f'Sending message to assistant: {message}')
-    response = requests.post(f'https://api.openai.com/v1/assistants/{assistant_id}/messages', headers=headers, json=data)
-    logger.info(f'OpenAI API Response Status Code: {response.status_code}')
-    logger.info(f'OpenAI API Response: {response.json()}')
-    return response
+    # Add a message to the thread with the user's question
+    message = client.beta.threads.messages.create(
+        thread_id=thread.id,
+        role="user",
+        content=user_question
+    )
 
-@app.post('/rover_engineer_request')
-async def handle_rover_engineer_ai_request(request: Request):
-    try:
-        body = await request.json()
-        question = body.get('question', '')
-        if not question:
-            return JSONResponse(content={"response": "Question is empty"}, status_code=400)
+    # Create a run
+    run = client.beta.threads.runs.create(
+        thread_id=thread.id,
+        assistant_id="asst_X6pCppPwljfx0SJwFfpyF1lS"
+    )
 
-        response = send_message_to_assistant(ASSISTANT_ID, question)
-        
-        if response.status_code == 200:
-            response_data = response.json().get('choices', [])
-            if response_data:
-                return JSONResponse(content={"response": response_data[0]['message']['content']})
-            else:
-                return JSONResponse(content={"response": "Unexpected response structure"}, status_code=500)
-        else:
-            logger.error(f'OpenAI Error: {response.status_code} {response.text}')
-            return JSONResponse(content={"response": f"OpenAI Error: {response.text}"}, status_code=response.status_code)
-    except Exception as e:
-        logger.exception("An error occurred while processing the request.")
-        raise HTTPException(status_code=500, detail=str(e))
+    # Polling for the run's completion
+    while True:
+        run_status = client.beta.threads.runs.retrieve(
+            thread_id=thread.id,
+            run_id=run.id
+        )
+        if run_status.status == 'completed':
+            break
+        time.sleep(1)  # Wait for 1 second before polling again
+
+    # Retrieve messages after the run is completed
+    thread_messages = client.beta.threads.messages.list(thread.id)
+
+    # Find and return the assistant's response
+    for msg in thread_messages.data:
+        if msg.role == 'assistant':
+            return jsonify({'response': msg.content[0].text.value})
+
+    return jsonify({'response': 'No response from the AI.'})
 
 if __name__ == '__main__':
-    import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+    app.run(debug=True)
