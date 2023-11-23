@@ -112,7 +112,7 @@
         const chatInput = document.querySelector('.chat-input');
         const sendBtn = document.querySelector('.send-btn');
 
-        sendBtn.addEventListener('click', () => {
+        sendBtn.addEventListener('click', async () => {
             const message = chatInput.value.trim();
             if (message) {
                 const userBubble = document.createElement('div');
@@ -121,6 +121,27 @@
                 chatWindow.appendChild(userBubble);
                 chatInput.value = '';
                 chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                try {
+                    const response = await fetch('/rover_engineer_request', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ question: message })
+                    });
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const data = await response.json();
+                    const aiBubble = document.createElement('div');
+                    aiBubble.classList.add('chat-message');
+                    aiBubble.textContent = data.response;
+                    chatWindow.appendChild(aiBubble);
+                    chatWindow.scrollTop = chatWindow.scrollHeight;
+                } catch (error) {
+                    console.error('Error:', error);
+                }
             }
         });
 
