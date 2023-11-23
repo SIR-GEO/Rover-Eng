@@ -9,8 +9,9 @@ import keychain
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
-# Initialize the OpenAI client with your API key
-openai.api_key = keychain.OPENAI_API_KEY
+import os
+openai.api_key = os.environ.get('OPENAI_API_KEY')
+
 client = openai.Client()
 
 @app.get("/", response_class=HTMLResponse)
