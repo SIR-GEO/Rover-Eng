@@ -7,6 +7,8 @@ import asyncio
 import os
 import logging
 
+logging.basicConfig(level=logging.DEBUG)
+
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 
@@ -61,3 +63,4 @@ async def rover_engineer_request(data: RoverEngineerRequest):
     except Exception as e:
         logger.exception("Error in rover_engineer_request endpoint")
         raise HTTPException(status_code=500, detail="An error occurred while processing your request.")
+    
