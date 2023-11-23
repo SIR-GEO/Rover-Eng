@@ -1,26 +1,32 @@
-from flask import Flask, render_template, request, jsonify
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from pydantic import BaseModel
 import openai
 import time
 import keychain
 
-app = Flask(__name__)
+app = FastAPI()
+templates = Jinja2Templates(directory="templates")
 
 # Initialize the OpenAI client with your API key
 openai.api_key = keychain.OPENAI_API_KEY
 client = openai.Client()
 
-@app.route('/')
-def index():
+@app.get("/", response_class=HTMLResponse)
+async def index(request: Request):
     try:
-        return render_template('index.html')
+        return templates.TemplateResponse("index.html", {"request": request})
     except Exception as e:
-        return jsonify({'error': str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
-@app.route('/rover_engineer_request', methods=['POST'])
-def rover_engineer_request():
+class RoverEngineerRequest(BaseModel):
+    question: str
+
+@app.post("/rover_engineer_request")
+async def rover_engineer_request(data: RoverEngineerRequest):
     try:
-        data = request.json
-        user_question = data['question']
+        user_question = data.question
 
         # Create a thread
         thread = client.beta.threads.create()
@@ -54,12 +60,13 @@ def rover_engineer_request():
         # Find and return the assistant's response
         for msg in thread_messages.data:
             if msg.role == 'assistant':
-                return jsonify({'response': msg.content[0].text.value})
+                return {'response': msg.content[0].text.value}
 
-        return jsonify({'response': 'No response from the AI.'})
+        return {'response': 'No response from the AI.'}
 
     except Exception as e:
-        return jsonify({'error': str(e)})
+        raise HTTPException(status_code=500, detail=str(e))
 
-if __name__ == '__main__':
-    app.run(debug=False)  # Turn off debug mode for production
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
