@@ -1,15 +1,14 @@
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 import requests
 import os
 
-app = Flask(__name__)
-CORS(app)
+app = FastAPI()
 
-@app.route('/')
-def index():
-    return app.send_static_file('index.html')
-app.config['JSONIFY_PRETTYPRINT_REGULAR'] = False
+@app.get('/')
+async def index():
+    return Response(content='index.html', media_type='text/html')
+app.config = {'JSONIFY_PRETTYPRINT_REGULAR': False}
 
 # Hardcoded API key and Assistant ID
 API_KEY = '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'
@@ -56,28 +55,30 @@ def send_message_to_thread(thread_id, message):
     
     return response
 
-@app.route('/rover_engineer_request', methods=['POST'])
-def handle_rover_engineer_ai_request():
-    question = request.json.get('question', '')
+@app.post('/rover_engineer_request')
+async def handle_rover_engineer_ai_request(request: Request):
+    body = await request.json()
+    question = body.get('question', '')
     if not question:
-        return jsonify({"response": "Question is empty"})
+        return JSONResponse(content={"response": "Question is empty"})
 
     current_thread_id = get_current_thread_id()
     if not current_thread_id:
-        return jsonify({"response": "Failed to get thread ID"})
+        return JSONResponse(content={"response": "Failed to get thread ID"})
 
     response = send_message_to_thread(current_thread_id, question)
     
     if response.status_code == 200:
         response_data = response.json().get('data', [])
         if response_data and 'text' in response_data[0]['content']:
-            return jsonify({"response": response_data[0]['content']['text']['value']})
+            return JSONResponse(content={"response": response_data[0]['content']['text']['value']})
         else:
-            return jsonify({"response": "Unexpected response structure"})
+            return JSONResponse(content={"response": "Unexpected response structure"})
     else:
         app.logger.error(f'cURL Error: {response.text}')
-        return jsonify({"response": f"cURL Error: {response.text}"})
+        return JSONResponse(content={"response": f"cURL Error: {response.text}"})
 
 if __name__ == '__main__':
-    app.run()
+    import uvicorn
+    uvicorn.run(app, host='0.0.0.0', port=8000)
 
