@@ -3,9 +3,9 @@ from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 import openai
-import asyncio
 import os
 import logging
+import time
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -37,22 +37,22 @@ async def rover_engineer_request(data: RoverEngineerRequest):
     try:
         user_question = data.question
 
-        # Assuming that the OpenAI client has asynchronous methods.
-        thread = await client.beta.threads.create()
-        message = await client.beta.threads.messages.create(
+        # Create the thread, message, and run synchronously
+        thread = client.beta.threads.create()
+        message = client.beta.threads.messages.create(
             thread_id=thread.id, role="user", content=user_question)
-
-        run = await client.beta.threads.runs.create(
+        run = client.beta.threads.runs.create(
             thread_id=thread.id, assistant_id="asst_X6pCppPwljfx0SJwFfpyF1lS")
 
+        # Use a synchronous loop with time.sleep()
         for _ in range(30):
-            run_status = await client.beta.threads.runs.retrieve(
+            run_status = client.beta.threads.runs.retrieve(
                 thread_id=thread.id, run_id=run.id)
             if run_status.status == 'completed':
                 break
-            await asyncio.sleep(1)
+            time.sleep(0.5)  # Sleep for 0.5 seconds
 
-        thread_messages = await client.beta.threads.messages.list(thread.id)
+        thread_messages = client.beta.threads.messages.list(thread.id)
 
         for msg in thread_messages.data:
             if msg.role == 'assistant':
@@ -63,4 +63,4 @@ async def rover_engineer_request(data: RoverEngineerRequest):
     except Exception as e:
         logger.exception("Error in rover_engineer_request endpoint")
         raise HTTPException(status_code=500, detail="An error occurred while processing your request.")
-    
+
