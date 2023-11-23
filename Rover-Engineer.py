@@ -1,10 +1,25 @@
-from fastapi import FastAPI, Request, Response
+from fastapi import FastAPI, Request, Response, HTTPException
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 import requests
 import os
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI()
+
+# Add CORS middleware to allow requests from any origin
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
 
 # Serving static files
 app.mount("/", StaticFiles(directory="static", html=True), name="static")
@@ -13,64 +28,45 @@ app.mount("/", StaticFiles(directory="static", html=True), name="static")
 API_KEY = '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'
 ASSISTANT_ID = 'asst_X6pCppPwljfx0SJwFfpyF1lS'
 
-def create_openai_thread():
+def send_message_to_assistant(assistant_id, message):
     headers = {
         'Authorization': f'Bearer {API_KEY}',
         'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v1'
-    }
-    response = requests.post('https://api.openai.com/v1/threads', headers=headers, json={})
-    
-    if response.status_code == 200:
-        thread_id = response.json().get('id')
-        if thread_id:
-            return thread_id
-        else:
-            app.logger.error('No thread ID in the response')
-            return None
-    else:
-        app.logger.error(f'Failed to create OpenAI thread: {response.status_code} {response.text}')
-        return None
-
-def get_current_thread_id():
-    return create_openai_thread()
-
-def send_message_to_thread(thread_id, message):
-    headers = {
-        'Authorization': f'Bearer {API_KEY}',
-        'Content-Type': 'application/json',
-        'OpenAI-Beta': 'assistants=v1'
+        'OpenAI-Beta': 'assistants=v1'  # Include this if you're using beta features
     }
     data = {
-        'role': 'user',
-        'content': message
+           'input': {
+               'messages': [{'role': 'user', 'content': message}]
+           }
     }
-    response = requests.post(f'https://api.openai.com/v1/threads/{thread_id}/messages', headers=headers, json=data)
-    app.logger.info(f'OpenAI API Response: {response.json()}')
+    logger.info(f'Sending message to assistant: {message}')
+    response = requests.post(f'https://api.openai.com/v1/assistants/{assistant_id}/messages', headers=headers, json=data)
+    logger.info(f'OpenAI API Response Status Code: {response.status_code}')
+    logger.info(f'OpenAI API Response: {response.json()}')
     return response
 
 @app.post('/rover_engineer_request')
 async def handle_rover_engineer_ai_request(request: Request):
-    body = await request.json()
-    question = body.get('question', '')
-    if not question:
-        return JSONResponse(content={"response": "Question is empty"})
+    try:
+        body = await request.json()
+        question = body.get('question', '')
+        if not question:
+            return JSONResponse(content={"response": "Question is empty"}, status_code=400)
 
-    current_thread_id = get_current_thread_id()
-    if not current_thread_id:
-        return JSONResponse(content={"response": "Failed to get thread ID"})
-
-    response = send_message_to_thread(current_thread_id, question)
-    
-    if response.status_code == 200:
-        response_data = response.json().get('data', [])
-        if response_data and 'text' in response_data[0]['content']:
-            return JSONResponse(content={"response": response_data[0]['content']['text']['value']})
+        response = send_message_to_assistant(ASSISTANT_ID, question)
+        
+        if response.status_code == 200:
+            response_data = response.json().get('choices', [])
+            if response_data:
+                return JSONResponse(content={"response": response_data[0]['message']['content']})
+            else:
+                return JSONResponse(content={"response": "Unexpected response structure"}, status_code=500)
         else:
-            return JSONResponse(content={"response": "Unexpected response structure"})
-    else:
-        app.logger.error(f'cURL Error: {response.text}')
-        return JSONResponse(content={"response": f"cURL Error: {response.text}"})
+            logger.error(f'OpenAI Error: {response.status_code} {response.text}')
+            return JSONResponse(content={"response": f"OpenAI Error: {response.text}"}, status_code=response.status_code)
+    except Exception as e:
+        logger.exception("An error occurred while processing the request.")
+        raise HTTPException(status_code=500, detail=str(e))
 
 if __name__ == '__main__':
     import uvicorn
