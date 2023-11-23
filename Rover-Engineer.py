@@ -3,11 +3,12 @@ import openai
 from openai import OpenAI
 import openai
 import time
+import keychain
 
 app = Flask(__name__)
 
 # Initialize the OpenAI client with your API key
-openai.api_key = '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'
+openai.api_key = keychain.OPENAI_API_KEY
 client = openai.Client()
 
 @app.route('/')
