@@ -3,46 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1920s Rover Engineer AI - Dark Theme</title>
+    <title>1920s Rover Engineer Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --burgundy-900: #3f000f;
+            --burgundy-800: #6d071a;
+            --burgundy-700: #9f1239;
+            --burgundy-600: #ab003c;
+            --burgundy-500: #b80d3d;
+            --burgundy-400: #c9184a;
+            --burgundy-300: #e5383b;
+            --burgundy-200: #f94144;
+            --burgundy-100: #ff4d6d;
+        }
         body {
-            background-color: #1a202c;
+            background-color: var(--burgundy-900); /* Dark burgundy background */
             color: #fff;
-            font-family: 'Roboto', sans-serif;
+            font-family: 'Playfair Display', serif; /* More interesting font */
         }
-        #chat-window {
-            max-height: 300px;
-            overflow-y: auto;
-            background-color: #2d3748;
+        .chat-container {
+            background-color: var(--burgundy-800); /* Darker shade for chat background */
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+        .chat-message {
+            background-color: var(--burgundy-700);
             border-radius: 0.5rem;
             padding: 1rem;
-        }
-        .chat-bubble {
-            background-color: #4a5568;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
+            margin-bottom: 1rem;
             color: #e2e8f0;
         }
         .chat-input {
-            background-color: #2d3748;
+            background-color: var(--burgundy-800);
             border: none;
             color: #fff;
             padding: 0.5rem 1rem;
             border-radius: 9999px;
-            width: 100%;
+            width: calc(100% - 3rem);
             box-sizing: border-box;
         }
-        .search-btn {
-            background-color: #4a5568;
+        .send-btn {
+            background-color: var(--burgundy-600); /* Slightly lighter burgundy for the button */
             color: #fff;
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 9999px;
             margin-left: 0.5rem;
-            flex-shrink: 0;
+        }
+        .prompt-container {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+        .prompt {
+            background-color: var(--burgundy-600); /* Slightly lighter burgundy for prompts */
+            color: #fff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .prompt:hover {
+            background-color: var(--burgundy-500); /* Hover effect for prompts */
         }
         .search-container {
             position: fixed;
@@ -53,81 +78,62 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--burgundy-600); /* Slightly lighter burgundy for the search container */
         }
         .search-bar {
             flex-grow: 1;
-            max-width: 640px; /* Adjust the max-width as needed */
+            max-width: 640px;
             display: flex;
             align-items: center;
-        }
-        .title {
-            position: absolute;
-            top: 2rem; /* Increased padding as per feedback */
-            left: 50%;
-            transform: translateX(-50%);
         }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
     <div class="container mx-auto px-4">
-        <h1 class="text-4xl font-bold mb-8 title">1920s Rover Engineer AI</h1>
-        <div id="chat-window">
+        <h1 class="text-4xl font-bold mb-8 text-center">1920s Rover Engineer</h1>
+        <div id="chat-window" class="chat-container">
             <!-- Chat messages will appear here -->
+        </div>
+        <div class="prompt-container">
+            <div class="prompt" onclick="insertPrompt('Explain the suspension system of 1920s Rovers.')">Explain the suspension system of 1920s Rovers.</div>
+            <div class="prompt" onclick="insertPrompt('Describe Rover\'s design philosophy in the 1920s.')">Describe Rover's design philosophy in the 1920s.</div>
+            <div class="prompt" onclick="insertPrompt('What were common engine issues in vintage Rovers?')">What were common engine issues in vintage Rovers?</div>
+            <div class="prompt" onclick="insertPrompt('How did Rover innovate car manufacturing then?')">How did Rover innovate car manufacturing then?</div>
         </div>
     </div>
     <div class="search-container">
         <div class="search-bar">
-            <input type="text" placeholder="Questions for me?" class="chat-input">
-            <button class="search-btn">Search</button>
+            <input type="text" placeholder="Message 1920s Rover Engineer..." class="chat-input">
+            <button class="send-btn">Send</button>
         </div>
     </div>
     <script>
         const chatWindow = document.getElementById('chat-window');
         const chatInput = document.querySelector('.chat-input');
-        const searchBtn = document.querySelector('.search-btn');
+        const sendBtn = document.querySelector('.send-btn');
 
-        searchBtn.addEventListener('click', () => {
+        sendBtn.addEventListener('click', () => {
             const message = chatInput.value.trim();
             if (message) {
-                // Create the user's chat bubble
                 const userBubble = document.createElement('div');
-                userBubble.classList.add('chat-bubble');
+                userBubble.classList.add('chat-message');
                 userBubble.textContent = message;
                 chatWindow.appendChild(userBubble);
                 chatInput.value = '';
                 chatWindow.scrollTop = chatWindow.scrollHeight;
-
-                // Send the question to the Flask backend
-                fetch('/rover_engineer_request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: message })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Create the AI's chat bubble
-                    const aiBubble = document.createElement('div');
-                    aiBubble.classList.add('chat-bubble');
-                    aiBubble.textContent = data.response;
-                    chatWindow.appendChild(aiBubble);
-                    chatWindow.scrollTop = chatWindow.scrollHeight;
-                })
-                .catch(error => console.error('Error:', error));
             }
         });
 
         chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                searchBtn.click();
+                sendBtn.click();
             }
         });
 
-        chatInput.addEventListener('input', () => {
-            chatInput.style.height = 'auto';
-            chatInput.style.height = chatInput.scrollHeight + 'px';
-        });
+        function insertPrompt(prompt) {
+            chatInput.value = prompt;
+            chatInput.focus();
+        }
     </script>
 </body>
 </html>
