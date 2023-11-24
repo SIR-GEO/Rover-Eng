@@ -50,7 +50,7 @@ async def rover_engineer_request(data: RoverEngineerRequest):
             thread_id=thread.id, assistant_id="asst_X6pCppPwljfx0SJwFfpyF1lS")
 
         # Use a synchronous loop with time.sleep()
-        for _ in range(30):
+        for _ in range(120):
             run_status = client.beta.threads.runs.retrieve(
                 thread_id=thread.id, run_id=run.id)
             if run_status.status == 'completed':

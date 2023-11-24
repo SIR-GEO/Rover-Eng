@@ -18,6 +18,7 @@
             background-color: #2d3748;
             border-radius: 0.5rem;
             padding: 1rem;
+            display: none; /* Hide the chat window initially */
         }
         .chat-bubble {
             background-color: #4a5568;
@@ -110,7 +111,7 @@
     <div class="container mx-auto px-4">
         <img src="/static/images/rover_eng_logo.png" alt="Logo" class="logo">
         <h1 class="text-4xl font-bold mb-8 title">Classic Rover Engineer - AI Assistant</h1>
-        <p class="text-lg text-center mb-4">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.</p>
+        <p class="text-lg text-center mb-4">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.<br>- No chat history is saved -</p>
         <div id="chat-window">
             <!-- Chat messages will appear here -->
         </div>
@@ -130,6 +131,9 @@
         searchBtn.addEventListener('click', () => {
             const message = chatInput.value.trim();
             if (message) {
+                // Make the chat window visible
+                chatWindow.style.display = 'block';
+
                 // Create the user's chat bubble
                 const userBubble = document.createElement('div');
                 userBubble.classList.add('chat-bubble');
