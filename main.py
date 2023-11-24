@@ -1,16 +1,20 @@
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import openai
 import os
 import logging
 import time
+import uvicorn
 
 logging.basicConfig(level=logging.DEBUG)
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
+
+app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
 # Ensure that the OPENAI_API_KEY is set in the environment variables.
 openai.api_key = os.environ.get('OPENAI_API_KEY')
@@ -63,4 +67,8 @@ async def rover_engineer_request(data: RoverEngineerRequest):
     except Exception as e:
         logger.exception("Error in rover_engineer_request endpoint")
         raise HTTPException(status_code=500, detail="An error occurred while processing your request.")
+    
 
+# Comment out if wanting to deploy on MS Azure:
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)

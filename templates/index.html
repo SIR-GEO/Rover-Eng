@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>1920s Rover Engineer AI - Dark Theme</title>
+    <title>Classic Rover Engineer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -13,7 +13,7 @@
             font-family: 'Roboto', sans-serif;
         }
         #chat-window {
-            max-height: 300px;
+            max-height: 500px;
             overflow-y: auto;
             background-color: #2d3748;
             border-radius: 0.5rem;
@@ -67,18 +67,28 @@
             transform: translateX(-50%);
         }
         .logo {
-            width: 50px;
-            height: 50px;
+            width: 200px; /* Increase the width as needed */
+            height: 200px; /* Increase the height as needed */
             border-radius: 50%;
             margin-bottom: 1rem;
+            transition: transform 0.3s ease-in-out; /* Smooth transition for any transform changes */
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            min-height: 100vh; /* Use viewport height to take full height of the screen */
+            transition: transform 0.3s ease-in-out; /* Smooth transition for any transform changes */
         }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
     <div class="container mx-auto px-4">
-        <img src="images/rover_eng_logo.png" alt="Logo" class="logo" style="width: 50px; height: 50px; border-radius: 50%; margin-bottom: 1rem;">
-        <h1 class="text-4xl font-bold mb-8 title">1920s Rover Engineer AI</h1>
-        <p class="text-lg text-center mb-4">1920s Rover engineer expert in classic car mechanics.</p>
+        <img src="/static/images/rover_eng_logo.png" alt="Logo" class="logo">
+        <h1 class="text-4xl font-bold mb-8 title">Classic Rover Engineer - AI Assistant</h1>
+        <p class="text-lg text-center mb-4">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.</p>
         <div id="chat-window">
             <!-- Chat messages will appear here -->
         </div>
