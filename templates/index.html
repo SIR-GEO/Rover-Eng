@@ -82,6 +82,28 @@
             min-height: 100vh; /* Use viewport height to take full height of the screen */
             transition: transform 0.3s ease-in-out; /* Smooth transition for any transform changes */
         }
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .hidden {
+            display: none;
+        }
+        .loading-image {
+            width: 50px; /* Adjust the size as needed */
+            height: 50px; /* Adjust the size as needed */
+            display: block;
+            margin: 0 auto; /* Center the image within the chat bubble */
+            border-radius: 5px; /* Round the corners of the image */
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
@@ -99,6 +121,7 @@
             <button class="search-btn">Search</button>
         </div>
     </div>
+   
     <script>
         const chatWindow = document.getElementById('chat-window');
         const chatInput = document.querySelector('.chat-input');
@@ -115,7 +138,18 @@
                 chatInput.value = '';
                 chatWindow.scrollTop = chatWindow.scrollHeight;
 
-                // Send the question to the Flask backend
+                // Show the loading animation inside the chat window
+                const loadingBubble = document.createElement('div');
+                loadingBubble.classList.add('chat-bubble', 'loading-bubble');
+                const loadingImage = document.createElement('img');
+                loadingImage.src = '/static/images/loading.gif';
+                loadingImage.alt = 'Loading';
+                loadingImage.classList.add('loading-image');
+                loadingBubble.appendChild(loadingImage);
+                chatWindow.appendChild(loadingBubble);
+                chatWindow.scrollTop = chatWindow.scrollHeight;
+
+                // Send the question to the backend
                 fetch('/rover_engineer_request', {
                     method: 'POST',
                     headers: {
@@ -125,6 +159,12 @@
                 })
                 .then(response => response.json())
                 .then(data => {
+                    // Remove the loading animation from the chat window
+                    const loadingBubble = document.querySelector('.loading-bubble');
+                    if (loadingBubble) {
+                        loadingBubble.remove();
+                    }
+
                     // Create the AI's chat bubble
                     const aiBubble = document.createElement('div');
                     aiBubble.classList.add('chat-bubble');
@@ -132,7 +172,14 @@
                     chatWindow.appendChild(aiBubble);
                     chatWindow.scrollTop = chatWindow.scrollHeight;
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Error:', error);
+                    // Remove the loading animation from the chat window
+                    const loadingBubble = document.querySelector('.loading-bubble');
+                    if (loadingBubble) {
+                        loadingBubble.remove();
+                    }
+                });
             }
         });
 
