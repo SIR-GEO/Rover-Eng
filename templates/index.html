@@ -26,6 +26,9 @@
             padding: 1rem;
             margin-bottom: 0.5rem;
             color: #e2e8f0;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Align items to the start of the flex container */
         }
         .chat-input {
             background-color: #2d3748;
@@ -105,13 +108,19 @@
             margin: 0 auto; /* Center the image within the chat bubble */
             border-radius: 5px; /* Round the corners of the image */
         }
+        .chat-label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 4px; /* Adjust as needed */
+            align-self: flex-start; /* Align self to the start of the flex container */
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
     <div class="container mx-auto px-4">
         <img src="/static/images/rover_eng_logo.png" alt="Logo" class="logo">
         <h1 class="text-4xl font-bold mb-8 title">Classic Rover Engineer - AI Assistant</h1>
-        <p class="text-lg text-center mb-4">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.<br>- No chat history is saved -</p>
+        <p class="text-lg text-center mb-4">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.<br>- Current limit is 5 questions | No chat history is saved -</p>
         <div id="chat-window">
             <!-- Chat messages will appear here -->
         </div>
@@ -137,7 +146,15 @@
                 // Create the user's chat bubble
                 const userBubble = document.createElement('div');
                 userBubble.classList.add('chat-bubble');
-                userBubble.textContent = message;
+                // Create the label for the user's message
+                const userLabel = document.createElement('span');
+                userLabel.classList.add('chat-label');
+                userLabel.textContent = "You:";
+                userBubble.appendChild(userLabel);
+                // Append the actual message text after the label
+                const userText = document.createElement('div'); // Use a div to contain the text
+                userText.textContent = message;
+                userBubble.appendChild(userText);
                 chatWindow.appendChild(userBubble);
                 chatInput.value = '';
                 chatWindow.scrollTop = chatWindow.scrollHeight;
@@ -172,7 +189,15 @@
                     // Create the AI's chat bubble
                     const aiBubble = document.createElement('div');
                     aiBubble.classList.add('chat-bubble');
-                    aiBubble.textContent = data.response;
+                    // Create the label for the AI's message
+                    const aiLabel = document.createElement('span');
+                    aiLabel.classList.add('chat-label');
+                    aiLabel.textContent = "Classic Rover Engineer:";
+                    aiBubble.appendChild(aiLabel);
+                    // Append the actual response text after the label
+                    const aiText = document.createElement('div'); // Use a div to contain the text
+                    aiText.textContent = data.response;
+                    aiBubble.appendChild(aiText);
                     chatWindow.appendChild(aiBubble);
                     chatWindow.scrollTop = chatWindow.scrollHeight;
                 })
