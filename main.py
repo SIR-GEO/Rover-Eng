@@ -26,8 +26,10 @@ client = openai.Client()
 
 logger = logging.getLogger("uvicorn.error")
 
-# Global variable to store the thread id
+# Global variable to store the thread id and the count of questions asked
 current_thread_id = None
+question_count = 0
+question_limit = 5
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
@@ -42,9 +44,14 @@ class RoverEngineerRequest(BaseModel):
 
 @app.post("/rover_engineer_request")
 async def rover_engineer_request(data: RoverEngineerRequest):
-    global current_thread_id
+    global current_thread_id, question_count
     try:
+        # Check if question limit is reached
+        if question_count >= question_limit:
+            return {'response': 'You have reached the limit of 5 questions. Please refresh to ask more questions.'}
+
         user_question = data.question
+        question_count += 1  # Increment the question count
 
         # If there's no current thread, create one
         if current_thread_id is None:
