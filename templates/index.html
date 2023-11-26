@@ -28,7 +28,20 @@
             color: #e2e8f0;
             display: flex;
             flex-direction: column;
-            align-items: flex-start; /* Align items to the start of the flex container */
+            width: 100%; /* Ensure the bubble spans the full width of the container */
+        }
+        .user-bubble {
+            align-items: flex-end; /* Align user messages to the right */
+        }
+        .user-label {
+            display: block;
+            text-align: right;
+            font-weight: bold;
+            margin-bottom: 4px; /* Space between label and message text */
+        }
+        .ai-bubble {
+            align-items: flex-start; /* Align AI messages to the left */
+            text-align: left;
         }
         .chat-input {
             background-color: #2d3748;
@@ -145,10 +158,10 @@
 
                 // Create the user's chat bubble
                 const userBubble = document.createElement('div');
-                userBubble.classList.add('chat-bubble');
+                userBubble.classList.add('chat-bubble', 'user-bubble');
                 // Create the label for the user's message
                 const userLabel = document.createElement('span');
-                userLabel.classList.add('chat-label');
+                userLabel.classList.add('user-label');
                 userLabel.textContent = "You:";
                 userBubble.appendChild(userLabel);
                 // Append the actual message text after the label
@@ -188,7 +201,7 @@
 
                     // Create the AI's chat bubble
                     const aiBubble = document.createElement('div');
-                    aiBubble.classList.add('chat-bubble');
+                    aiBubble.classList.add('chat-bubble', 'ai-bubble');
                     // Create the label for the AI's message
                     const aiLabel = document.createElement('span');
                     aiLabel.classList.add('chat-label');
