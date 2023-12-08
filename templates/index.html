@@ -100,12 +100,6 @@
             transition: transform 0.3s ease-in-out; /* Smooth transition for any transform changes */
         }
         #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -132,7 +126,14 @@
         transform: scaleX(-1);
         }
 
+        @keyframes dummy {
+            0% { transform: none; }
+            100% { transform: none; }
+        }
 
+        #loading img {
+            animation: dummy 1s infinite; /* Adjust the duration as needed */
+        }
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
@@ -155,6 +156,16 @@
         const chatWindow = document.getElementById('chat-window');
         const chatInput = document.querySelector('.chat-input');
         const searchBtn = document.querySelector('.search-btn');
+        let flipInterval;
+
+        function startRandomFlip() {
+            const gifDuration = 6270; // Duration of one loop of the gif animation in milliseconds
+            flipInterval = setInterval(randomFlipLoadingGif, gifDuration);
+        }
+
+        function stopRandomFlip() {
+            clearInterval(flipInterval);
+        }
 
         searchBtn.addEventListener('click', () => {
             const message = chatInput.value.trim();
@@ -191,7 +202,7 @@
                 chatWindow.scrollTop = chatWindow.scrollHeight;
 
                 // Call the randomFlipLoadingGif function
-                randomFlipLoadingGif();
+                startRandomFlip();
 
                 // Send the question to the backend
                 fetch('/rover_engineer_request', {
@@ -208,6 +219,9 @@
                     if (loadingBubble) {
                         loadingBubble.remove();
                     }
+
+                    // Stop the random flip
+                    stopRandomFlip();
 
                     // Create the AI's chat bubble
                     const aiBubble = document.createElement('div');
@@ -231,6 +245,8 @@
                     if (loadingBubble) {
                         loadingBubble.remove();
                     }
+                    // Stop the random flip
+                    stopRandomFlip();
                 });
             }
         });
@@ -247,7 +263,7 @@
             } else {
                 loadingGif.classList.remove('flip-vertical');
             }
-        }
+            }
         chatInput.addEventListener('input', () => {
             chatInput.style.height = 'auto';
             chatInput.style.height = chatInput.scrollHeight + 'px';
