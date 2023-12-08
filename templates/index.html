@@ -127,6 +127,12 @@
             margin-bottom: 4px; /* Adjust as needed */
             align-self: flex-start; /* Align self to the start of the flex container */
         }
+        
+        .flip-vertical {
+        transform: scaleX(-1);
+        }
+
+
     </style>
 </head>
 <body class="flex flex-col items-center justify-center min-h-screen">
@@ -183,6 +189,9 @@
                 chatWindow.appendChild(loadingBubble);
                 chatWindow.scrollTop = chatWindow.scrollHeight;
 
+                // Call the randomFlipLoadingGif function
+                randomFlipLoadingGif();
+
                 // Send the question to the backend
                 fetch('/rover_engineer_request', {
                     method: 'POST',
@@ -230,11 +239,19 @@
                 searchBtn.click();
             }
         });
-
+        function randomFlipLoadingGif() {
+            const loadingGif = document.querySelector('#loading img');
+            if (Math.random() > 0.5) {
+                loadingGif.classList.add('flip-vertical');
+            } else {
+                loadingGif.classList.remove('flip-vertical');
+            }
+        }
         chatInput.addEventListener('input', () => {
             chatInput.style.height = 'auto';
             chatInput.style.height = chatInput.scrollHeight + 'px';
         });
+
     </script>
 </body>
 </html>
