@@ -184,6 +184,7 @@
                 const loadingImage = document.createElement('img');
                 loadingImage.src = '/static/images/loading.gif';
                 loadingImage.alt = 'Loading';
+                loadingImage.id = 'loading'; // Assign the id here
                 loadingImage.classList.add('loading-image');
                 loadingBubble.appendChild(loadingImage);
                 chatWindow.appendChild(loadingBubble);
@@ -240,7 +241,7 @@
             }
         });
         function randomFlipLoadingGif() {
-            const loadingGif = document.querySelector('#loading img');
+            const loadingGif = document.querySelector('#loading');
             if (Math.random() > 0.5) {
                 loadingGif.classList.add('flip-vertical');
             } else {
