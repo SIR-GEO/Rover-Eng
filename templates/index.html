@@ -4,143 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Classic Rover Engineer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            background-color: #1a202c;
-            color: #fff;
-            font-family: 'Roboto', sans-serif;
-        }
-        #chat-window {
-            max-height: 500px;
-            overflow-y: auto;
-            background-color: #2d3748;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            display: none; /* Hide the chat window initially */
-        }
-        .chat-bubble {
-            background-color: #4a5568;
-            border-radius: 0.5rem;
-            padding: 1rem;
-            margin-bottom: 0.5rem;
-            color: #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            width: 100%; /* Ensure the bubble spans the full width of the container */
-        }
-        .user-bubble {
-            align-items: flex-end; /* Align user messages to the right */
-        }
-        .user-label {
-            display: block;
-            text-align: right;
-            font-weight: bold;
-            margin-bottom: 4px; /* Space between label and message text */
-        }
-        .ai-bubble {
-            align-items: flex-start; /* Align AI messages to the left */
-            text-align: left;
-        }
-        .chat-input {
-            background-color: #2d3748;
-            border: none;
-            color: #fff;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            width: 100%;
-            box-sizing: border-box;
-        }
-        .search-btn {
-            background-color: #4a5568;
-            color: #fff;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            margin-left: 0.5rem;
-            flex-shrink: 0;
-        }
-        .search-container {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .search-bar {
-            flex-grow: 1;
-            max-width: 640px; /* Adjust the max-width as needed */
-            display: flex;
-            align-items: center;
-        }
-        .title {
-            position: absolute;
-            top: 2rem; /* Increased padding as per feedback */
-            left: 50%;
-            transform: translateX(-50%);
-        }
-        .logo {
-            width: 200px; /* Increase the width as needed */
-            height: 200px; /* Increase the height as needed */
-            border-radius: 50%;
-            margin-bottom: 1rem;
-            transition: transform 0.3s ease-in-out; /* Smooth transition for any transform changes */
-        }
-        .container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            min-height: 100vh; /* Use viewport height to take full height of the screen */
-            transition: transform 0.3s ease-in-out; /* Smooth transition for any transform changes */
-        }
-        #loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-        .hidden {
-            display: none;
-        }
-        .loading-image {
-            width: 40px; /* Adjust the size as needed */
-            height: 40px; /* Adjust the size as needed */
-            display: block;
-            margin: 0 auto; /* Center the image within the chat bubble */
-            border-radius: 5px; /* Round the corners of the image */
-        }
-        .chat-label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 4px; /* Adjust as needed */
-            align-self: flex-start; /* Align self to the start of the flex container */
-        }
-        
-        .flip-vertical {
-        transform: scaleX(-1);
-        }
-
-        @keyframes dummy {
-            0% { transform: none; }
-            100% { transform: none; }
-        }
-
-        #loading img {
-            animation: dummy 1s infinite; /* Adjust the duration as needed */
-        }
-    </style>
+    <link href="/static/css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
-<body class="flex flex-col items-center justify-center min-h-screen">
-    <div class="container mx-auto px-4">
+<body>
+    <div class="container">
         <img src="/static/images/rover_eng_logo.png" alt="Logo" class="logo">
-        <h1 class="text-4xl font-bold mb-8 title">Classic Rover Engineer - AI Assistant</h1>
-        <p class="text-lg text-center mb-4">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.<br>- No chat history is saved -</p>
+        <h1 class="title">Classic Rover Engineer - AI Assistant</h1>
+        <p class="description">Seek expert insights on technical specifications, delve into the historical significance, or explore recreational aspects of automobiles.<br>- No chat history is saved -</p>
         <div id="chat-window">
             <!-- Chat messages will appear here -->
         </div>
@@ -151,124 +26,17 @@
             <button class="search-btn">Search</button>
         </div>
     </div>
-   
     <script>
-        const chatWindow = document.getElementById('chat-window');
-        const chatInput = document.querySelector('.chat-input');
-        const searchBtn = document.querySelector('.search-btn');
-        let flipInterval;
-
-        function startRandomFlip() {
-            const gifDuration = 6270; // Duration of one loop of the gif animation in milliseconds
-            flipInterval = setInterval(randomFlipLoadingGif, gifDuration);
-        }
-
-        function stopRandomFlip() {
-            clearInterval(flipInterval);
-        }
-
-        searchBtn.addEventListener('click', () => {
-            const message = chatInput.value.trim();
-            if (message) {
-                // Make the chat window visible
-                chatWindow.style.display = 'block';
-
-                // Create the user's chat bubble
-                const userBubble = document.createElement('div');
-                userBubble.classList.add('chat-bubble', 'user-bubble');
-                // Create the label for the user's message
-                const userLabel = document.createElement('span');
-                userLabel.classList.add('user-label');
-                userLabel.textContent = "You:";
-                userBubble.appendChild(userLabel);
-                // Append the actual message text after the label
-                const userText = document.createElement('div'); // Use a div to contain the text
-                userText.textContent = message;
-                userBubble.appendChild(userText);
-                chatWindow.appendChild(userBubble);
-                chatInput.value = '';
-                chatWindow.scrollTop = chatWindow.scrollHeight;
-
-                // Show the loading animation inside the chat window
-                const loadingBubble = document.createElement('div');
-                loadingBubble.classList.add('chat-bubble', 'loading-bubble');
-                const loadingImage = document.createElement('img');
-                loadingImage.src = '/static/images/loading.gif';
-                loadingImage.alt = 'Loading';
-                loadingImage.id = 'loading'; // Assign the id here
-                loadingImage.classList.add('loading-image');
-                loadingBubble.appendChild(loadingImage);
-                chatWindow.appendChild(loadingBubble);
-                chatWindow.scrollTop = chatWindow.scrollHeight;
-
-                // Call the randomFlipLoadingGif function
-                startRandomFlip();
-
-                // Send the question to the backend
-                fetch('/rover_engineer_request', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ question: message })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    // Remove the loading animation from the chat window
-                    const loadingBubble = document.querySelector('.loading-bubble');
-                    if (loadingBubble) {
-                        loadingBubble.remove();
-                    }
-
-                    // Stop the random flip
-                    stopRandomFlip();
-
-                    // Create the AI's chat bubble
-                    const aiBubble = document.createElement('div');
-                    aiBubble.classList.add('chat-bubble', 'ai-bubble');
-                    // Create the label for the AI's message
-                    const aiLabel = document.createElement('span');
-                    aiLabel.classList.add('chat-label');
-                    aiLabel.textContent = "Classic Rover Engineer:";
-                    aiBubble.appendChild(aiLabel);
-                    // Append the actual response text after the label
-                    const aiText = document.createElement('div'); // Use a div to contain the text
-                    aiText.textContent = data.response;
-                    aiBubble.appendChild(aiText);
-                    chatWindow.appendChild(aiBubble);
-                    chatWindow.scrollTop = chatWindow.scrollHeight;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // Remove the loading animation from the chat window
-                    const loadingBubble = document.querySelector('.loading-bubble');
-                    if (loadingBubble) {
-                        loadingBubble.remove();
-                    }
-                    // Stop the random flip
-                    stopRandomFlip();
-                });
-            }
+        marked.setOptions({
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-',
+            gfm: true,
+            breaks: true
         });
-
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchBtn.click();
-            }
-        });
-        function randomFlipLoadingGif() {
-            const loadingGif = document.querySelector('#loading');
-            if (Math.random() > 0.5) {
-                loadingGif.classList.add('flip-vertical');
-            } else {
-                loadingGif.classList.remove('flip-vertical');
-            }
-            }
-        chatInput.addEventListener('input', () => {
-            chatInput.style.height = 'auto';
-            chatInput.style.height = chatInput.scrollHeight + 'px';
-        });
-
     </script>
+    <script src="/static/js/chat.js"></script>
 </body>
 </html>

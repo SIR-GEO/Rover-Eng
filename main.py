@@ -1,95 +1,178 @@
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-import openai
+from openai import OpenAI
 import os
 import logging
-import time
 import uvicorn
-from starlette.background import BackgroundTasks
+import asyncio
+import json
+from typing import List, Dict
+from dotenv import load_dotenv
 
-logging.basicConfig(level=logging.DEBUG)
+# Load environment variables
+load_dotenv()
 
-app = FastAPI()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("rover-engineer")
+
+app = FastAPI(title="Classic Rover Engineer")
 templates = Jinja2Templates(directory="templates")
-
 app.mount("/static", StaticFiles(directory="templates/static"), name="static")
 
-# Ensure that the OPENAI_API_KEY is set in the environment variables.
-openai.api_key = os.environ.get('OPENAI_API_KEY')
-if not openai.api_key:
-    raise ValueError("The OPENAI_API_KEY environment variable must be set.")
+# Initialize OpenAI client
+client = OpenAI()
 
-client = openai.Client()
+# Use existing assistant ID
+ASSISTANT_ID = "asst_X6pCppPwljfx0SJwFfpyF1lS"
+if not ASSISTANT_ID:
+    logger.error("Assistant ID not found")
+    raise ValueError("The ASSISTANT_ID must be set.")
 
-logger = logging.getLogger("uvicorn.error")
-
-# Global variable to store the thread id
-current_thread_id = None
+# Store active WebSocket connections
+active_connections: Dict[str, WebSocket] = {}
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
     try:
         return templates.TemplateResponse("index.html", {"request": request})
     except Exception as e:
-        logger.exception("Error in index endpoint")
-        raise HTTPException(status_code=500, detail="An error occurred while processing your request.")
+        logger.error(f"Error in index endpoint: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-class RoverEngineerRequest(BaseModel):
-    question: str
+class ConnectionManager:
+    def __init__(self):
+        self.active_connections: Dict[str, WebSocket] = {}
 
-@app.post("/rover_engineer_request")
-async def rover_engineer_request(data: RoverEngineerRequest):
-    global current_thread_id
+    async def connect(self, websocket: WebSocket) -> str:
+        await websocket.accept()
+        client_id = str(id(websocket))
+        self.active_connections[client_id] = websocket
+        return client_id
+
+    def disconnect(self, client_id: str):
+        if client_id in self.active_connections:
+            del self.active_connections[client_id]
+
+    async def send_json(self, client_id: str, message: dict):
+        if client_id in self.active_connections:
+            await self.active_connections[client_id].send_json(message)
+
+manager = ConnectionManager()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    client_id = await manager.connect(websocket)
     try:
-        user_question = data.question
-
-        # If there's no current thread, create one
-        if current_thread_id is None:
-            thread = client.beta.threads.create()
-            current_thread_id = thread.id
-        else:
-            thread = client.beta.threads.retrieve(thread_id=current_thread_id)
-
-        # Add the user's question to the thread
-        message = client.beta.threads.messages.create(
-            thread_id=current_thread_id, role="user", content=user_question)
-
-        # Run the AI assistant
-        run = client.beta.threads.runs.create(
-            thread_id=current_thread_id, assistant_id="asst_X6pCppPwljfx0SJwFfpyF1lS")
-
-        # Wait for the run to complete
-        for _ in range(120):
-            run_status = client.beta.threads.runs.retrieve(
-                thread_id=current_thread_id, run_id=run.id)
-            if run_status.status == 'completed':
-                break
-            time.sleep(0.5)
-
-        # Retrieve all messages in the thread
-        thread_messages = client.beta.threads.messages.list(current_thread_id)
-
-        # Find the AI's response
-        ai_response = None
-        for msg in thread_messages.data:
-            if msg.role == 'assistant':
-                ai_response = msg.content[0].text.value
-                break
-
-        if ai_response:
-            # Log the AI's response instead of creating a system message
-            logger.info(f"AI Response: {ai_response}")
-            return {'response': ai_response}
-
-        return {'response': 'No response from the AI.'}
+        while True:
+            data = await websocket.receive_text()
+            await process_message(client_id, data)
+    except WebSocketDisconnect:
+        manager.disconnect(client_id)
     except Exception as e:
-        logger.exception("Error in rover_engineer_request endpoint")
-        raise HTTPException(status_code=500, detail="An error occurred while processing your request.")
-    
+        logger.error(f"WebSocket error: {str(e)}")
+        await websocket.close()
+        manager.disconnect(client_id)
 
-# Comment out if wanting to deploy on MS Azure:
+async def process_message(client_id: str, message: str):
+    try:
+        # Create a thread for this conversation
+        thread = client.beta.threads.create()
+        
+        # Add the user's message to the thread
+        client.beta.threads.messages.create(
+            thread_id=thread.id,
+            role="user",
+            content=message
+        )
+
+        # Send stream start event
+        await manager.send_json(client_id, {
+            "type": "stream_start"
+        })
+
+        # Create run
+        run = client.beta.threads.runs.create(
+            thread_id=thread.id,
+            assistant_id=ASSISTANT_ID
+        )
+
+        # Poll for updates
+        while True:
+            run_status = client.beta.threads.runs.retrieve(
+                thread_id=thread.id,
+                run_id=run.id
+            )
+            
+            if run_status.status == 'completed':
+                # Get the messages
+                messages = client.beta.threads.messages.list(
+                    thread_id=thread.id
+                )
+                
+                # Get the last assistant message
+                for msg in messages.data:
+                    if msg.role == "assistant":
+                        # Send the content
+                        if msg.content and len(msg.content) > 0:
+                            content = msg.content[0].text.value
+                            await manager.send_json(client_id, {
+                                "type": "stream_content",
+                                "content": content
+                            })
+                        break
+                break
+                
+            elif run_status.status in ['failed', 'cancelled', 'expired']:
+                await manager.send_json(client_id, {
+                    "type": "error",
+                    "message": f"Run ended with status: {run_status.status}"
+                })
+                break
+                
+            # Check if any file search was used
+            steps = client.beta.threads.runs.steps.list(
+                thread_id=thread.id,
+                run_id=run.id
+            )
+            
+            file_search_details = []
+            for step in steps.data:
+                if (hasattr(step, 'step_details') and 
+                    step.step_details.type == "tool_calls"):
+                    for tool_call in step.step_details.tool_calls:
+                        if (tool_call.type == "file_search" and 
+                            hasattr(tool_call, "file_search") and 
+                            hasattr(tool_call.file_search, "results")):
+                            for result in tool_call.file_search.results:
+                                file_search_details.append({
+                                    "file_name": result.file_name,
+                                    "file_citation": result.file_citation
+                                })
+            
+            if file_search_details:
+                await manager.send_json(client_id, {
+                    "type": "file_search_info",
+                    "files": file_search_details
+                })
+            
+            # Short delay before next check
+            await asyncio.sleep(0.1)
+
+        # Send stream end event
+        await manager.send_json(client_id, {
+            "type": "stream_end"
+        })
+
+    except Exception as e:
+        logger.error(f"Error in process_message: {str(e)}")
+        await manager.send_json(client_id, {
+            "type": "error",
+            "message": "An error occurred while processing your request."
+        })
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=7860)
