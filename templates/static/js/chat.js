@@ -50,19 +50,15 @@ function appendContent(content) {
         currentMessageElement = createAssistantMessage();
     }
     
-    // Parse the content as markdown and append it
-    const parsedContent = marked.parse(content);
-    // Create a temporary div to hold the new content
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = parsedContent;
-    
-    // Get the text content and append it to the current paragraph
-    let currentParagraph = currentMessageElement.querySelector('p:last-child');
-    if (!currentParagraph) {
-        currentParagraph = document.createElement('p');
-        currentMessageElement.appendChild(currentParagraph);
+    // Accumulate content and re-parse markdown
+    if (!currentMessageElement.fullContent) {
+        currentMessageElement.fullContent = '';
     }
-    currentParagraph.textContent += tempDiv.textContent;
+    currentMessageElement.fullContent += content;
+    
+    // Parse the full content as markdown
+    const parsedContent = marked.parse(currentMessageElement.fullContent);
+    currentMessageElement.innerHTML = parsedContent;
     
     // Highlight any code blocks
     currentMessageElement.querySelectorAll('pre code').forEach((block) => {
