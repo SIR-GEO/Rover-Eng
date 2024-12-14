@@ -392,19 +392,22 @@ body {
 .file-search-info {
     margin-top: 12px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.05);
+    background: rgba(0, 0, 0, 0.2);
     border-radius: 6px;
     font-size: 0.9em;
 }
 
 .file-search-header {
-    color: #666;
-    margin-bottom: 6px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .file-search-header i {
-    margin-right: 6px;
+    color: var(--accent-color);
 }
 
 .file-list {
@@ -414,25 +417,92 @@ body {
 }
 
 .file-list li {
-    display: flex;
-    flex-direction: column;
-    margin-bottom: 4px;
-    padding: 4px 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .file-list li:last-child {
     border-bottom: none;
-    margin-bottom: 0;
 }
 
 .file-name {
-    color: #2563eb;
+    color: var(--accent-color);
+    text-decoration: none;
     font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.file-name:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
 }
 
 .file-citation {
-    color: #666;
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 8px 0 4px 12px;
+    margin-top: 4px;
+    border-left: 2px solid var(--accent-color);
+    opacity: 0.9;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.source-annotations {
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
     font-size: 0.9em;
-    margin-top: 2px;
+}
+
+.source-header {
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.source-header i {
+    color: var(--accent-color);
+}
+
+.source-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.source-item {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.source-item:last-child {
+    border-bottom: none;
+}
+
+.source-title {
+    color: var(--accent-color);
+    text-decoration: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.source-title:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+
+.source-quote {
+    color: var(--text-secondary);
+    font-style: italic;
+    padding: 8px 0 4px 12px;
+    margin-top: 4px;
+    border-left: 2px solid var(--accent-color);
+    opacity: 0.9;
+    animation: fadeIn 0.3s ease-in-out;
 } 
