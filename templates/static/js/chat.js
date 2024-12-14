@@ -52,7 +52,17 @@ function appendContent(content) {
     
     // Parse the content as markdown and append it
     const parsedContent = marked.parse(content);
-    currentMessageElement.innerHTML = currentMessageElement.innerHTML + parsedContent;
+    // Create a temporary div to hold the new content
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = parsedContent;
+    
+    // Get the text content and append it to the current paragraph
+    let currentParagraph = currentMessageElement.querySelector('p:last-child');
+    if (!currentParagraph) {
+        currentParagraph = document.createElement('p');
+        currentMessageElement.appendChild(currentParagraph);
+    }
+    currentParagraph.textContent += tempDiv.textContent;
     
     // Highlight any code blocks
     currentMessageElement.querySelectorAll('pre code').forEach((block) => {
