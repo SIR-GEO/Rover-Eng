@@ -1,3 +1,5 @@
+### Available to play around with for FREE: https://huggingface.co/spaces/Mr-Geo/Rover-GPT
+
 # 1920s Rover Engineer AI
 ## Description
 This repository contains a FastAPI application designed to simulate a 1920s Rover Engineer AI. The application features a user-friendly chat interface where users can interact with an AI to ask questions related to rover engineering. The backend integrates OpenAI's API to process and respond to user queries. The front-end is designed with a dark theme, reminiscent of the 1920s aesthetic, and built using HTML, Tailwind CSS, and JavaScript.
